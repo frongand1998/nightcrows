@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nightcrows - Inventory & Enhancement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+        }
+
+        .player-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 10px;
+            padding: 15px 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-card h3 {
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .inventory-section {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255,215,0,0.3);
+            padding-bottom: 10px;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+
+        .inventory-slot {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .inventory-slot:hover {
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .inventory-slot.empty {
+            border-style: dashed;
+            opacity: 0.5;
+        }
+
+        .inventory-slot .item-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .inventory-slot .item-quantity {
+            font-size: 10px;
+            color: #ffd700;
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 3px;
+            padding: 1px 3px;
+        }
+
+        .equipment-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .equipment-panel {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .equipment-slots {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .equipment-slot {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #666;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .equipment-slot:hover {
+            border-color: #ffd700;
+            transform: scale(1.05);
+        }
+
+        .equipment-slot .slot-label {
+            font-size: 8px;
+            color: #aaa;
+            position: absolute;
+            top: 2px;
+            left: 4px;
+        }
+
+        .equipment-slot .item-icon {
+            font-size: 28px;
+        }
+
+        .enhancement-panel {
+            margin-top: 20px;
+        }
+
+        .enhancement-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .enhancement-item {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .enhancement-item.selected {
+            border-color: #ffd700;
+            background: rgba(255,215,0,0.1);
+        }
+
+        .enhancement-level {
+            background: #444;
+            color: #ffd700;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .enhancement-stats {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .enhance-button {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .enhance-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,215,0,0.4);
+        }
+
+        .enhance-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,215,0,0.3);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(255,215,0,0.2);
+            border-color: #ffd700;
+            transform: translateY(-1px);
+        }
+
+        .item-tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 15px;
+            color: #fff;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 250px;
+            pointer-events: none;
+            display: none;
+        }
+
+        .tooltip-title {
+            color: #ffd700;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .tooltip-stats {
+            margin-top: 10px;
+            color: #90EE90;
+        }
+
+        .rarity-common { border-color: #808080; }
+        .rarity-uncommon { border-color: #00ff00; }
+        .rarity-rare { border-color: #0080ff; }
+        .rarity-epic { border-color: #8000ff; }
+        .rarity-legendary { border-color: #ff8000; }
+        .rarity-mythic { border-color: #ff0080; }
+
+        .success-message {
+            background: rgba(0,255,0,0.2);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message {
+            background: rgba(255,0,0,0.2);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ Inventory & Enhancement ⚔️</h1>
+        </div>
+
+        <div class="player-info">
+            <div class="info-card">
+                <h3>Character</h3>
+                <div id="character-name">Not logged in</div>
+            </div>
+            <div class="info-card">
+                <h3>Gold</h3>
+                <div id="player-gold">0 💰</div>
+            </div>
+            <div class="info-card">
+                <h3>Level</h3>
+                <div id="player-level">1</div>
+            </div>
+            <div class="info-card">
+                <h3>Class</h3>
+                <div id="player-class">Unknown</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="inventory-section">
+                <h2 class="section-title">📦 Inventory</h2>
+                
+                <div class="filters">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="weapon">Weapons</button>
+                    <button class="filter-btn" data-filter="armor">Armor</button>
+                    <button class="filter-btn" data-filter="accessory">Accessories</button>
+                    <button class="filter-btn" data-filter="consumable">Consumables</button>
+                    <button class="filter-btn" data-filter="material">Materials</button>
+                </div>
+
+                <div class="inventory-grid" id="inventory-grid">
+                    <div class="loading">Loading inventory...</div>
+                </div>
+            </div>
+
+            <div class="equipment-section">
+                <div class="equipment-panel">
+                    <h2 class="section-title">⚔️ Equipment</h2>
+                    
+                    <div class="equipment-slots">
+                        <div class="equipment-slot" data-slot="helmet">
+                            <div class="slot-label">Helmet</div>
+                            <div class="item-icon">⛑️</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="necklace">
+                            <div class="slot-label">Necklace</div>
+                            <div class="item-icon">📿</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="ring">
+                            <div class="slot-label">Ring</div>
+                            <div class="item-icon">💍</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="weapon">
+                            <div class="slot-label">Weapon</div>
+                            <div class="item-icon">⚔️</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="chest">
+                            <div class="slot-label">Chest</div>
+                            <div class="item-icon">🥼</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="gloves">
+                            <div class="slot-label">Gloves</div>
+                            <div class="item-icon">🧤</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="legs">
+                            <div class="slot-label">Legs</div>
+                            <div class="item-icon">👖</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="boots">
+                            <div class="slot-label">Boots</div>
+                            <div class="item-icon">👢</div>
+                        </div>
+                        <div class="equipment-slot" data-slot="shield">
+                            <div class="slot-label">Shield</div>
+                            <div class="item-icon">🛡️</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="equipment-panel">
+                    <h2 class="section-title">✨ Enhancement</h2>
+                    
+                    <div class="enhancement-panel">
+                        <div id="enhancement-message">Select an equipped item to enhance</div>
+                        
+                        <div class="enhancement-controls" id="enhancement-controls" style="display: none;">
+                            <div class="enhancement-item" id="selected-enhancement-item">
+                                <div class="item-icon" id="enhance-item-icon">⚔️</div>
+                                <div>
+                                    <div id="enhance-item-name">Item Name</div>
+                                    <div class="enhancement-level" id="enhance-item-level">+0</div>
+                                    <div class="enhancement-stats" id="enhance-item-stats">Current Stats</div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4 style="color: #ffd700; margin-bottom: 10px;">Enhancement Cost:</h4>
+                                <div id="enhancement-cost">Gold: 100 💰</div>
+                                <div id="enhancement-materials">Materials: 2x Iron Ore</div>
+                                <div id="enhancement-success-rate" style="color: #90EE90;">Success Rate: 85%</div>
+                            </div>
+                            
+                            <button class="enhance-button" id="enhance-btn">
+                                🔨 Enhance Equipment
+                            </button>
+                        </div>
+                        
+                        <div class="success-message" id="success-message"></div>
+                        <div class="error-message" id="error-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="item-tooltip" id="tooltip">
+        <div class="tooltip-title"></div>
+        <div class="tooltip-description"></div>
+        <div class="tooltip-stats"></div>
+    </div>
+
+    <script>
+        class InventoryManager {
+            constructor() {
+                this.currentCharacterId = null;
+                this.inventory = null;
+                this.allItems = [];
+                this.selectedEnhancementItem = null;
+                this.currentFilter = 'all';
+                
+                this.init();
+            }
+
+            async init() {
+                // Check if user is logged in
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    this.showError('Please log in first');
+                    return;
+                }
+
+                await this.loadItems();
+                await this.loadCharacterInfo();
+                await this.loadInventory();
+                this.setupEventListeners();
+            }
+
+            async loadItems() {
+                try {
+                    const response = await fetch('/api/items');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.allItems = result.data;
+                    }
+                } catch (error) {
+                    console.error('Error loading items:', error);
+                }
+            }
+
+            async loadCharacterInfo() {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/game/characters', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success && result.data.length > 0) {
+                        const character = result.data[0]; // Use first character
+                        this.currentCharacterId = character.id;
+                        
+                        document.getElementById('character-name').textContent = character.name;
+                        document.getElementById('player-level').textContent = character.level;
+                        document.getElementById('player-class').textContent = character.class;
+                    }
+                } catch (error) {
+                    console.error('Error loading character info:', error);
+                }
+            }
+
+            async loadInventory() {
+                if (!this.currentCharacterId) return;
+
+                try {
+                    const response = await fetch(`/api/inventory/${this.currentCharacterId}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.inventory = result.data;
+                        document.getElementById('player-gold').textContent = `${this.inventory.gold || 0} 💰`;
+                        this.renderInventory();
+                        this.renderEquipment();
+                    }
+                } catch (error) {
+                    console.error('Error loading inventory:', error);
+                }
+            }
+
+            renderInventory() {
+                const grid = document.getElementById('inventory-grid');
+                grid.innerHTML = '';
+
+                // Filter items based on current filter
+                let itemsToShow = this.inventory.items || [];
+                if (this.currentFilter !== 'all') {
+                    itemsToShow = itemsToShow.filter(item => {
+                        const itemData = this.getItemById(item.itemId);
+                        return itemData && itemData.type === this.currentFilter;
+                    });
+                }
+
+                // Create inventory slots
+                for (let i = 0; i < this.inventory.capacity; i++) {
+                    const slot = document.createElement('div');
+                    slot.className = 'inventory-slot';
+                    
+                    if (i < itemsToShow.length) {
+                        const item = itemsToShow[i];
+                        const itemData = this.getItemById(item.itemId);
+                        
+                        if (itemData) {
+                            slot.classList.add(`rarity-${itemData.rarity}`);
+                            slot.innerHTML = `
+                                <div class="item-icon">${itemData.icon}</div>
+                                ${item.quantity > 1 ? `<div class="item-quantity">${item.quantity}</div>` : ''}
+                            `;
+                            
+                            slot.addEventListener('mouseenter', (e) => this.showTooltip(e, itemData));
+                            slot.addEventListener('mouseleave', () => this.hideTooltip());
+                            slot.addEventListener('click', () => this.handleItemClick(item, itemData));
+                        }
+                    } else {
+                        slot.classList.add('empty');
+                    }
+                    
+                    grid.appendChild(slot);
+                }
+            }
+
+            renderEquipment() {
+                const slots = document.querySelectorAll('.equipment-slot');
+                slots.forEach(slot => {
+                    const slotType = slot.dataset.slot;
+                    const equippedItem = this.inventory.items.find(item => 
+                        item.equipped && item.slot === slotType
+                    );
+                    
+                    if (equippedItem) {
+                        const itemData = this.getItemById(equippedItem.itemId);
+                        if (itemData) {
+                            slot.classList.add(`rarity-${itemData.rarity}`);
+                            slot.innerHTML = `
+                                <div class="slot-label">${slotType}</div>
+                                <div class="item-icon">${itemData.icon}</div>
+                                <div class="enhancement-level">+${equippedItem.enhancementLevel || 0}</div>
+                            `;
+                            
+                            slot.addEventListener('click', () => this.selectForEnhancement(equippedItem, itemData));
+                        }
+                    } else {
+                        slot.className = 'equipment-slot';
+                        slot.innerHTML = `
+                            <div class="slot-label">${slotType}</div>
+                            <div class="item-icon">${this.getSlotIcon(slotType)}</div>
+                        `;
+                    }
+                });
+            }
+
+            getSlotIcon(slot) {
+                const icons = {
+                    helmet: '⛑️',
+                    necklace: '📿',
+                    ring: '💍',
+                    weapon: '⚔️',
+                    chest: '🥼',
+                    gloves: '🧤',
+                    legs: '👖',
+                    boots: '👢',
+                    shield: '🛡️'
+                };
+                return icons[slot] || '📦';
+            }
+
+            selectForEnhancement(item, itemData) {
+                this.selectedEnhancementItem = { item, itemData };
+                
+                const controls = document.getElementById('enhancement-controls');
+                const message = document.getElementById('enhancement-message');
+                
+                message.style.display = 'none';
+                controls.style.display = 'block';
+                
+                // Update enhancement UI
+                document.getElementById('enhance-item-icon').textContent = itemData.icon;
+                document.getElementById('enhance-item-name').textContent = itemData.name;
+                document.getElementById('enhance-item-level').textContent = `+${item.enhancementLevel || 0}`;
+                
+                const currentLevel = item.enhancementLevel || 0;
+                const nextLevel = currentLevel + 1;
+                const cost = this.calculateEnhancementCost(currentLevel);
+                const successRate = this.calculateSuccessRate(currentLevel);
+                
+                document.getElementById('enhancement-cost').textContent = `Gold: ${cost.gold} 💰`;
+                document.getElementById('enhancement-materials').textContent = 
+                    `Materials: ${cost.materials}x Iron Ore`;
+                document.getElementById('enhancement-success-rate').textContent = 
+                    `Success Rate: ${successRate}%`;
+                
+                // Update stats display
+                this.updateStatsDisplay(itemData, currentLevel);
+            }
+
+            calculateEnhancementCost(level) {
+                return {
+                    gold: 100 * Math.pow(2, level),
+                    materials: Math.max(1, level + 1)
+                };
+            }
+
+            calculateSuccessRate(level) {
+                return Math.max(50, 100 - (level * 10));
+            }
+
+            updateStatsDisplay(itemData, enhancementLevel) {
+                const baseStats = itemData.stats;
+                const multiplier = 1 + (enhancementLevel * 0.2);
+                
+                let statsText = '';
+                Object.entries(baseStats).forEach(([stat, value]) => {
+                    const enhancedValue = Math.floor(value * multiplier);
+                    statsText += `${stat}: ${enhancedValue} `;
+                });
+                
+                document.getElementById('enhance-item-stats').textContent = statsText;
+            }
+
+            async enhanceItem() {
+                if (!this.selectedEnhancementItem) return;
+                
+                const { item, itemData } = this.selectedEnhancementItem;
+                const currentLevel = item.enhancementLevel || 0;
+                const cost = this.calculateEnhancementCost(currentLevel);
+                const successRate = this.calculateSuccessRate(currentLevel);
+                
+                // Check if player has enough resources
+                if (this.inventory.gold < cost.gold) {
+                    this.showError('Not enough gold!');
+                    return;
+                }
+                
+                // Simulate enhancement attempt
+                const success = Math.random() * 100 < successRate;
+                
+                try {
+                    // Update gold
+                    await this.updateGold(-cost.gold);
+                    
+                    if (success) {
+                        // Enhancement successful
+                        item.enhancementLevel = currentLevel + 1;
+                        await this.updateInventory();
+                        
+                        this.showSuccess(`${itemData.name} enhanced to +${item.enhancementLevel}!`);
+                        this.renderEquipment();
+                        this.selectForEnhancement(item, itemData); // Refresh display
+                    } else {
+                        // Enhancement failed
+                        this.showError('Enhancement failed! Gold lost but item is safe.');
+                    }
+                } catch (error) {
+                    console.error('Enhancement error:', error);
+                    this.showError('Enhancement failed due to server error.');
+                }
+            }
+
+            async updateGold(amount) {
+                if (!this.currentCharacterId) return;
+                
+                try {
+                    const response = await fetch('/api/inventory/gold', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            characterId: this.currentCharacterId,
+                            amount: amount
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        this.inventory.gold = Math.max(0, this.inventory.gold + amount);
+                        document.getElementById('player-gold').textContent = `${this.inventory.gold} 💰`;
+                    }
+                } catch (error) {
+                    console.error('Error updating gold:', error);
+                }
+            }
+
+            async updateInventory() {
+                // This would normally save to server
+                // For now, just keep local changes
+            }
+
+            getItemById(itemId) {
+                return this.allItems.find(item => item.id === itemId);
+            }
+
+            handleItemClick(item, itemData) {
+                if (itemData.type === 'weapon' || itemData.type === 'armor' || itemData.type === 'accessory') {
+                    // Try to equip item
+                    this.equipItem(item, itemData);
+                } else if (itemData.type === 'consumable') {
+                    // Use consumable
+                    this.useItem(item, itemData);
+                }
+            }
+
+            async equipItem(item, itemData) {
+                try {
+                    const slot = this.determineSlot(itemData);
+                    if (!slot) return;
+                    
+                    const response = await fetch('/api/inventory/equip', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            characterId: this.currentCharacterId,
+                            itemId: item.itemId,
+                            slot: slot
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        await this.loadInventory();
+                        this.showSuccess(`${itemData.name} equipped!`);
+                    }
+                } catch (error) {
+                    console.error('Error equipping item:', error);
+                }
+            }
+
+            determineSlot(itemData) {
+                if (itemData.type === 'weapon') return 'weapon';
+                if (itemData.type === 'armor') {
+                    if (itemData.name.includes('Helmet')) return 'helmet';
+                    if (itemData.name.includes('Chest') || itemData.name.includes('Armor')) return 'chest';
+                    if (itemData.name.includes('Legs')) return 'legs';
+                    if (itemData.name.includes('Boots')) return 'boots';
+                    if (itemData.name.includes('Gloves')) return 'gloves';
+                    return 'chest'; // Default
+                }
+                if (itemData.type === 'accessory') {
+                    if (itemData.name.includes('Ring')) return 'ring';
+                    if (itemData.name.includes('Necklace')) return 'necklace';
+                }
+                return null;
+            }
+
+            showTooltip(event, itemData) {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.querySelector('.tooltip-title').textContent = itemData.name;
+                tooltip.querySelector('.tooltip-description').textContent = itemData.description;
+                
+                let statsText = '';
+                Object.entries(itemData.stats).forEach(([stat, value]) => {
+                    if (value > 0) {
+                        statsText += `${stat}: +${value}\n`;
+                    }
+                });
+                tooltip.querySelector('.tooltip-stats').textContent = statsText;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = event.pageX + 10 + 'px';
+                tooltip.style.top = event.pageY + 10 + 'px';
+            }
+
+            hideTooltip() {
+                document.getElementById('tooltip').style.display = 'none';
+            }
+
+            setupEventListeners() {
+                // Filter buttons
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.currentFilter = btn.dataset.filter;
+                        this.renderInventory();
+                    });
+                });
+
+                // Enhancement button
+                document.getElementById('enhance-btn').addEventListener('click', () => {
+                    this.enhanceItem();
+                });
+            }
+
+            showSuccess(message) {
+                const elem = document.getElementById('success-message');
+                elem.textContent = message;
+                elem.style.display = 'block';
+                setTimeout(() => elem.style.display = 'none', 3000);
+            }
+
+            showError(message) {
+                const elem = document.getElementById('error-message');
+                elem.textContent = message;
+                elem.style.display = 'block';
+                setTimeout(() => elem.style.display = 'none', 3000);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new InventoryManager();
+        });
+    </script>
+</body>
+</html>

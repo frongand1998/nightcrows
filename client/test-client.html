@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nightcrows Private Server - Test Client</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .form-group {
+            margin: 10px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+        
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        button {
+            background: #4CAF50;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid #4CAF50;
+        }
+        
+        .status.disconnected {
+            background: rgba(244, 67, 54, 0.3);
+            border: 1px solid #f44336;
+        }
+        
+        .status.info {
+            background: rgba(33, 150, 243, 0.3);
+            border: 1px solid #2196F3;
+        }
+        
+        #gameArea {
+            display: none;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        #gameCanvas {
+            background: #000;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+        }
+        
+        #chatArea {
+            height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .chat-message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .logs {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            opacity: 0.8;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .flex {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .flex > * {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐦‍⬛ Nightcrows Private Server</h1>
+            <p>Educational MMO Server for Learning Game Architecture</p>
+        </div>
+
+        <!-- Connection Status -->
+        <div id="connectionStatus" class="status disconnected">
+            Disconnected from server
+        </div>
+
+        <!-- Authentication Section -->
+        <div id="authSection" class="section">
+            <h2>Authentication</h2>
+            <div class="flex">
+                <div>
+                    <h3>Login</h3>
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="loginUsername" placeholder="Enter username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" placeholder="Enter password">
+                    </div>
+                    <button onclick="login()">Login</button>
+                </div>
+                
+                <div>
+                    <h3>Register</h3>
+                    <div class="form-group">
+                        <label>Username:</label>
+                        <input type="text" id="regUsername" placeholder="Choose username">
+                    </div>
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="regEmail" placeholder="Enter email">
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="regPassword" placeholder="Choose password">
+                    </div>
+                    <button onclick="register()">Register</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Section -->
+        <div id="characterSection" class="section hidden">
+            <h2>Character Management</h2>
+            <div class="flex">
+                <div>
+                    <h3>Your Characters</h3>
+                    <div id="characterList"></div>
+                    <button onclick="loadCharacters()">Refresh Characters</button>
+                </div>
+                
+                <div>
+                    <h3>Create New Character</h3>
+                    <div class="form-group">
+                        <label>Character Name:</label>
+                        <input type="text" id="charName" placeholder="Enter character name">
+                    </div>
+                    <div class="form-group">
+                        <label>Class:</label>
+                        <select id="charClass">
+                            <option value="Warrior">Warrior (Tank)</option>
+                            <option value="Mage">Mage (Magic DPS)</option>
+                            <option value="Archer">Archer (Ranged DPS)</option>
+                            <option value="Assassin">Assassin (Melee DPS)</option>
+                        </select>
+                    </div>
+                    <button onclick="createCharacter()">Create Character</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div id="gameArea">
+            <div>
+                <canvas id="gameCanvas" width="800" height="600"></canvas>
+                <div class="flex">
+                    <button onclick="moveUp()">↑ Up</button>
+                    <button onclick="moveDown()">↓ Down</button>
+                    <button onclick="moveLeft()">← Left</button>
+                    <button onclick="moveRight()">→ Right</button>
+                </div>
+            </div>
+            
+            <div>
+                <h3>Chat</h3>
+                <div id="chatArea"></div>
+                <div class="form-group">
+                    <input type="text" id="chatInput" placeholder="Type message..." onkeypress="handleChatKeyPress(event)">
+                    <button onclick="sendChat()">Send</button>
+                </div>
+                
+                <h3>Game Info</h3>
+                <div id="playerInfo"></div>
+            </div>
+        </div>
+
+        <!-- Debug Logs -->
+        <div class="section">
+            <h2>Debug Logs</h2>
+            <div id="logs" class="logs"></div>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let currentUser = null;
+        let currentCharacter = null;
+        let playerPosition = { x: 100, y: 100 };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            connectWebSocket();
+            checkServerHealth();
+        });
+
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logs.appendChild(logEntry);
+            logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type}] ${message}`);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        function updateConnectionStatus(connected, message) {
+            const status = document.getElementById('connectionStatus');
+            status.className = `status ${connected ? 'connected' : 'disconnected'}`;
+            status.textContent = message;
+        }
+
+        async function checkServerHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                log(`Server health check: ${data.status}`);
+            } catch (error) {
+                log(`Server health check failed: ${error.message}`, 'error');
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                updateConnectionStatus(true, 'Connected to Nightcrows Server');
+                log('WebSocket connected');
+            };
+            
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                handleServerMessage(message);
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus(false, 'Disconnected from server');
+                log('WebSocket disconnected');
+                // Try to reconnect after 5 seconds
+                setTimeout(connectWebSocket, 5000);
+            };
+            
+            ws.onerror = function(error) {
+                log(`WebSocket error: ${error}`, 'error');
+            };
+        }
+
+        function handleServerMessage(message) {
+            log(`Received: ${message.type}`, 'receive');
+            
+            switch (message.type) {
+                case 'welcome':
+                    log(message.message);
+                    break;
+                    
+                case 'authenticated':
+                    log('Successfully authenticated with server');
+                    break;
+                    
+                case 'character_selected':
+                    currentCharacter = message.data.character;
+                    playerPosition = { ...message.data.character.position };
+                    showGameArea();
+                    updatePlayerInfo();
+                    log(`Character selected: ${currentCharacter.name}`);
+                    break;
+                    
+                case 'player_moved':
+                    log(`Player ${message.data.characterId} moved to ${message.data.position.x}, ${message.data.position.y}`);
+                    break;
+                    
+                case 'chat_message':
+                    displayChatMessage(message.data);
+                    break;
+                    
+                case 'player_entered':
+                    log(`${message.data.name} entered the world`);
+                    break;
+                    
+                case 'player_left':
+                    log(`${message.data.name} left the world`);
+                    break;
+                    
+                case 'error':
+                    log(`Server error: ${message.data.message}`, 'error');
+                    break;
+                    
+                case 'pong':
+                    log('Ping response received');
+                    break;
+                    
+                case 'monster_spawn':
+                case 'monster_died':
+                case 'monster_moved':
+                case 'monster_damaged':
+                case 'monster_attack':
+                    // Handle monster events if monster system is loaded
+                    if (typeof handleMonsterMessage === 'function') {
+                        handleMonsterMessage(message);
+                    }
+                    break;
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('Please enter username and password');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentUser = data.data;
+                    log(`Logged in as ${username}`);
+                    
+                    // Authenticate with WebSocket
+                    sendMessage({ type: 'authenticate', data: { userId: currentUser.userId } });
+                    
+                    // Show character section
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('characterSection').classList.remove('hidden');
+                    
+                    loadCharacters();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                log(`Login error: ${error.message}`, 'error');
+                alert('Login failed');
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPassword').value;
+            
+            if (!username || !email || !password) {
+                alert('Please fill all fields');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Registration successful! You can now login.');
+                    // Clear form
+                    document.getElementById('regUsername').value = '';
+                    document.getElementById('regEmail').value = '';
+                    document.getElementById('regPassword').value = '';
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                log(`Registration error: ${error.message}`, 'error');
+                alert('Registration failed');
+            }
+        }
+
+        async function loadCharacters() {
+            if (!currentUser) return;
+            
+            try {
+                const response = await fetch(`/api/game/characters/${currentUser.userId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCharacters(data.data);
+                }
+            } catch (error) {
+                log(`Load characters error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayCharacters(characters) {
+            const list = document.getElementById('characterList');
+            list.innerHTML = '';
+            
+            characters.forEach(char => {
+                const div = document.createElement('div');
+                div.className = 'character-item';
+                div.innerHTML = `
+                    <p><strong>${char.name}</strong> (${char.class})</p>
+                    <p>Level ${char.level} | HP: ${char.hp} | MP: ${char.mp}</p>
+                    <button onclick="selectCharacter(${char.id})">Select</button>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        async function createCharacter() {
+            const name = document.getElementById('charName').value;
+            const characterClass = document.getElementById('charClass').value;
+            
+            if (!name) {
+                alert('Please enter character name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/game/character/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: currentUser.userId,
+                        name,
+                        characterClass
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`Character created: ${name}`);
+                    document.getElementById('charName').value = '';
+                    loadCharacters();
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                log(`Create character error: ${error.message}`, 'error');
+                alert('Character creation failed');
+            }
+        }
+
+        function selectCharacter(characterId) {
+            sendMessage({ type: 'select_character', data: { characterId } });
+        }
+
+        function showGameArea() {
+            document.getElementById('characterSection').classList.add('hidden');
+            document.getElementById('gameArea').style.display = 'grid';
+            initializeGame();
+        }
+
+        function initializeGame() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.fillStyle = '#001122';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw player
+            drawPlayer(ctx);
+            
+            log('Game initialized');
+        }
+
+        function drawPlayer(ctx) {
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(playerPosition.x - 10, playerPosition.y - 10, 20, 20);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(currentCharacter ? currentCharacter.name : 'Player', 
+                        playerPosition.x, playerPosition.y - 15);
+        }
+
+        function movePlayer(dx, dy) {
+            playerPosition.x = Math.max(10, Math.min(790, playerPosition.x + dx));
+            playerPosition.y = Math.max(10, Math.min(590, playerPosition.y + dy));
+            
+            sendMessage({ 
+                type: 'move', 
+                data: { 
+                    x: playerPosition.x, 
+                    y: playerPosition.y,
+                    mapId: currentCharacter ? currentCharacter.position.mapId : 1
+                } 
+            });
+            
+            // Redraw
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#001122';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawPlayer(ctx);
+        }
+
+        function moveUp() { movePlayer(0, -20); }
+        function moveDown() { movePlayer(0, 20); }
+        function moveLeft() { movePlayer(-20, 0); }
+        function moveRight() { movePlayer(20, 0); }
+
+        function sendChat() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                sendMessage({ type: 'chat', data: { message, channel: 'global' } });
+                input.value = '';
+            }
+        }
+
+        function handleChatKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendChat();
+            }
+        }
+
+        function displayChatMessage(data) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `<strong>${data.characterName}:</strong> ${data.message}`;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function updatePlayerInfo() {
+            if (!currentCharacter) return;
+            
+            const info = document.getElementById('playerInfo');
+            info.innerHTML = `
+                <p><strong>Name:</strong> ${currentCharacter.name}</p>
+                <p><strong>Class:</strong> ${currentCharacter.class}</p>
+                <p><strong>Level:</strong> ${currentCharacter.level}</p>
+                <p><strong>Position:</strong> ${playerPosition.x}, ${playerPosition.y}</p>
+            `;
+        }
+
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                log(`Sent: ${message.type}`, 'send');
+            } else {
+                log('WebSocket not connected', 'error');
+            }
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', function(event) {
+            if (currentCharacter) {
+                switch(event.key) {
+                    case 'ArrowUp':
+                    case 'w':
+                        moveUp();
+                        break;
+                    case 'ArrowDown':
+                    case 's':
+                        moveDown();
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                        moveLeft();
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        moveRight();
+                        break;
+                }
+            }
+        });
+
+        // Ping every 30 seconds to keep connection alive
+        setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                sendMessage({ type: 'ping' });
+            }
+        }, 30000);
+    </script>
+    
+    <!-- Monster system -->
+    <script src="monster-system.js"></script>
+</body>
+</html>
